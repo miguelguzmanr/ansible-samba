@@ -1,0 +1,18 @@
+# Customize #
+
+# Create user group
+samba_usergroup: samba
+
+# Create directories
+samba_public_dir: /samba/public
+samba_private_dir: /samba/private
+
+# Configure Samba
+samba_configuration_dir: /etc/samba
+samba_configuration: "{{ samba_configuration_dir }}/smb.conf"
+
+# Configure users
+samba_users:
+  - name: miguel
+    password: $1$miguel$PNGyyNDPmPNIaI6mQjpaP0
+    samba_password: miguel

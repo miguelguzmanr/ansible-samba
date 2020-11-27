@@ -1,0 +1,16 @@
+# Variables #
+
+# Install Samba
+samba_packages:
+  - samba-common
+  - samba
+  - samba-client
+
+samba_services:
+  - smb
+  - nmb
+
+# Configure SELinux
+samba_selinux_booleans:
+  - samba_export_all_ro
+  - samba_export_all_rw
