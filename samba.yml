@@ -1,0 +1,142 @@
+---
+# Author: Miguel Guzmán Rodríguez
+
+- name: Deploy and configure a Samba server
+  gather_facts: false
+  hosts: samba_miguel
+  tasks:
+    ### Variables
+
+    - include_vars:
+        dir: vars
+
+    ### Tasks
+
+    #
+    # Install Samba
+    #
+
+    - name: Install the latest version of Samba
+      dnf:
+        name: "{{ samba_packages }}"
+        state: latest
+
+    #
+    # Create user group
+    #
+
+    - name: "Create the user group if it does not exist"
+      group:
+        name: "{{ samba_usergroup }}"
+        state: present
+
+    #
+    # Create directories
+    #
+
+    - name: Create the public directory if it does not exist
+      file:
+        path: "{{ samba_public_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create the private directory if it does not exist
+      file:
+        path: "{{ samba_private_dir }}"
+        state: directory
+        mode: '0770'
+        group: "{{ samba_usergroup }}"
+
+    #
+    # Configure Samba
+    #
+
+    - name: Backup the Samba configuration file and create a new one
+      blockinfile:
+        path: /etc/samba/smb.conf
+        backup: yes
+        block: |
+          [global]
+          workgroup = WORKGROUP
+          server string = Samba Server %v
+          netbios name  = samba-server
+          security = user
+          map to guest = bad user
+
+          [public]
+          path = {{ samba_public_dir }}
+          guest ok = yes
+          browsable = yes
+          writable = yes
+          read only = no
+
+          [private]
+          path = {{ samba_private_dir }}
+          valid users = @{{ samba_usergroup }}
+          guest ok = no
+          writable = yes
+          browsable = yes
+
+    - name: Start and enable the Samba services
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items: "{{ samba_services }}"
+
+    #
+    # Configure SELinux
+    #
+
+    - name: Set Samba related flags on SELinux and keep it persistent across reboots
+      ansible.posix.seboolean:
+        name: "{{ item }}"
+        state: yes
+        persistent: yes
+      with_items: "{{ samba_selinux_booleans }}"
+
+    - name: Allow Samba to modify files in the configured directories
+      community.general.sefcontext:
+        target: '{{ item }}(/.*)?'
+        setype: samba_share_t
+        state: present
+      with_items:
+        - "{{ samba_public_dir }}"
+        - "{{ samba_private_dir }}"
+
+    - name: Apply new SELinux file context to filesystem
+      command: restorecon {{ item }}
+      with_items:
+        - "{{ samba_public_dir }}"
+        - "{{ samba_private_dir }}"
+
+    #
+    # Configure Firewall
+    #
+
+    - name: Allow Samba traffic in the public zone
+      ansible.posix.firewalld:
+        service: samba
+        permanent: yes
+        state: enabled
+        zone: public
+
+    - name: Reload the Firewall service
+      systemd:
+        name: firewalld
+        state: reloaded
+
+    #
+    # Configure users
+    #
+
+    - name: Create Samba users if they don't exist
+      user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        group: "{{ samba_usergroup }}"
+      with_items: "{{ samba_users }}"
+
+    - name: Grant users access to Samba
+      shell: "(echo {{ item.samba_password }}; echo {{ item.samba_password }}) | smbpasswd -s -a {{ item.name }}"
+      with_items: "{{ samba_users }}"
