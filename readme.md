@@ -4,31 +4,31 @@
 
 - Ansible 2.9 and the following collections:
   - ansible.posix (seboolean, firewalld)
-  - community.general (semanage fcontext)
+  - community.general (semanage, fcontext)
 
 ## Configuration
 
 ### Variables
 
-Configure variable according to your needs in [vars/config.yml](vars/config.yml)
+Configure variables according to your needs in [vars/config.yml](vars/config.yml)
 
-> `samba_usergroup`
+`samba_usergroup`
 
-Users in this group will be granted access to the file server.
+- Users in this group will be granted access to the file server.
 
-> `samba_public_dir`
+`samba_public_dir`
 
-> `samba_private_dir`
+`samba_private_dir`
 
-Paths to public and private folders.
+- Paths to public and private samba folders.
 
-> `samba_configuration_dir`
+`samba_configuration_dir`
 
-> `samba_configuration`
+`samba_configuration`
 
-Paths to the configuration folder and the configuration file: `smb.conf`.
+- Paths to the configuration folder and the configuration file: `smb.conf`.
 
-> `samba_users`
+`samba_users`
 
 ```yaml
   - name:
@@ -36,20 +36,22 @@ Paths to the configuration folder and the configuration file: `smb.conf`.
     samba_password:
 ```
 
-Users will be created and assigned a password to access the file server.
+- Users will be created and assigned a password to access the file server.
 
 ### Generate encrypted password
 
-> `python -c 'import crypt; print crypt.crypt("password", "$1$salt$")'`
+To easily generate an encrypted password, use the crypt python library:
+
+`python -c 'import crypt; print crypt.crypt("password", "$1$salt$")'`
 
 ## How-to
 
-1. Install ansible
+1. Install ansible. See: [https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html](Installing Ansible ─ Ansible Documentation)
 2. Install required collections: `ansible-galaxy collection install ansible.posix community.general`
-3. Clone this repository `git clone https://github.com/miguelguzmanr/ansible-samba`
+3. Clone this repository: `git clone https://github.com/miguelguzmanr/ansible-samba`
 4. Run your playbook: `cd ansible-samba && ansible-playbook ./samba.yml`
 
-## Output
+## Example Output
 
 ```
 PLAY [Deploy and configure a Samba server] *********************************************************
@@ -95,10 +97,10 @@ TASK [Reload the Firewall service] *********************************************
 changed: [192.168.1.199]
 
 TASK [Create Samba users if they don't exist] ******************************************************
-ok: [192.168.1.199] => (item={'name': 'miguel', 'password': '$1$miguel$PNGyyNDPmPNIaI6mQjpaP0', 'samba_password': 'miguel'})
+ok: [192.168.1.199] => (item={'name': 'miguel', 'password': '(REDACTED)', 'samba_password': '(REDACTED)'})
 
 TASK [Grant users access to Samba] ******************************************************************
-changed: [192.168.1.199] => (item={'name': 'miguel', 'password': '$1$miguel$PNGyyNDPmPNIaI6mQjpaP0', 'samba_password': 'miguel'})
+changed: [192.168.1.199] => (item={'name': 'miguel', 'password': '(REDACTED)', 'samba_password': '(REDACTED)'})
 
 PLAY RECAP *****************************************************************************************
 192.168.1.199              : ok=14   changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
