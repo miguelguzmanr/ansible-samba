@@ -13,6 +13,6 @@ samba_configuration: "{{ samba_configuration_dir }}/smb.conf"
 
 # Configure users
 samba_users:
-  - name: miguel
-    password: $1$miguel$PNGyyNDPmPNIaI6mQjpaP0
-    samba_password: miguel
+  - name: username
+    password: encrypted-password
+    samba_password: password
